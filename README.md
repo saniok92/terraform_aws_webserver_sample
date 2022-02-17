@@ -11,4 +11,4 @@
 9. Create Ubuntu server and install/enable apache2
 10. Take output public ip after finishing
 
-Export you AWS credentials and print terraform init, plan and apply
+Export you AWS credentials in terminal, print terraform init, plan and apply
