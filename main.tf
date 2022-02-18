@@ -158,14 +158,7 @@ resource "aws_instance" "ubuntu_server" {
     device_index = 0
     network_interface_id = aws_network_interface.web-server.id
   }
-
-  user_data = <<-EOF
-                #!/bin/bash
-                sudo apt update -y
-                sudo apt install apache2 -y
-                sudo systemctl start apache2
-                sudo bash -c 'echo test server from Terraform in AWS > /var/www/html/index.html'
-                EOF
+  user_data = file("apache2.sh")
   tags = {
     Name = "Ubuntu_server"
   }
