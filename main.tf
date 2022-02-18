@@ -1,19 +1,19 @@
 provider "aws" {
-    region = "eu-central-1"
+  # profile = "default" 
+  region = "eu-central-1"
 }
 
 # owner = ["959519296277"] 
 
 # 1. Create VPC
-
 resource "aws_vpc" "prod_vpc" {
-  cidr_block  = "10.0.0.0/16"
+  cidr_block = "10.0.0.0/16"
 
   tags = {
     Name = "vpc-prod"
   }
   lifecycle {
-  create_before_destroy = true
+    create_before_destroy = true
   }
 }
 
@@ -26,7 +26,7 @@ resource "aws_internet_gateway" "gw" {
     Name = "gateway_prod"
   }
   lifecycle {
-  create_before_destroy = true
+    create_before_destroy = true
   }
 }
 
@@ -43,21 +43,21 @@ resource "aws_route_table" "prod-route-table" {
     Name = "prod-route-table"
   }
   lifecycle {
-  create_before_destroy = true
+    create_before_destroy = true
   }
 }
 
 # 4. Subnet
 
 resource "aws_subnet" "subnet-1" {
-  vpc_id     = aws_vpc.prod_vpc.id
-  cidr_block = "10.0.1.0/24"
+  vpc_id            = aws_vpc.prod_vpc.id
+  cidr_block        = "10.0.1.0/24"
   availability_zone = "eu-central-1a"
   tags = {
     Name = "prod-subnet"
   }
   lifecycle {
-  create_before_destroy = true
+    create_before_destroy = true
   }
 }
 
@@ -68,7 +68,7 @@ resource "aws_route_table_association" "a" {
   route_table_id = aws_route_table.prod-route-table.id
 
   lifecycle {
-  create_before_destroy = true
+    create_before_destroy = true
   }
 }
 
@@ -80,44 +80,44 @@ resource "aws_security_group" "allow_web" {
   vpc_id      = aws_vpc.prod_vpc.id
 
   ingress {
-    description      = "HTTPS"
-    from_port        = 443
-    to_port          = 443
-    protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
-    
+    description = "HTTPS"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+
   }
 
-    ingress {
-    description      = "HTTP"
-    from_port        = 80
-    to_port          = 80
-    protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
-    
+  ingress {
+    description = "HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+
   }
 
-    ingress {
-    description      = "SSH"
-    from_port        = 22
-    to_port          = 22
-    protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
-    
+  ingress {
+    description = "SSH"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+
   }
 
   egress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   tags = {
     Name = "allow_web"
   }
   lifecycle {
-  create_before_destroy = true
+    create_before_destroy = true
   }
 }
 
@@ -129,7 +129,7 @@ resource "aws_network_interface" "web-server" {
   security_groups = [aws_security_group.allow_web.id]
 
   lifecycle {
-  create_before_destroy = true
+    create_before_destroy = true
   }
 }
 
@@ -139,23 +139,23 @@ resource "aws_eip" "one" {
   vpc                       = true
   network_interface         = aws_network_interface.web-server.id
   associate_with_private_ip = "10.0.1.50"
-  depends_on = [aws_internet_gateway.gw]
+  depends_on                = [aws_internet_gateway.gw]
 
   lifecycle {
-  create_before_destroy = true
+    create_before_destroy = true
   }
 }
 
 # 9. Create Ubuntu server and install/enable apache2
 
 resource "aws_instance" "ubuntu_server" {
-  ami           = "ami-0d527b8c289b4af7f"
-  instance_type = "t2.micro"
+  ami               = "ami-0d527b8c289b4af7f"
+  instance_type     = var.instance_type
   availability_zone = "eu-central-1a"
-  key_name = "#name key pairs"
+  key_name          = "#name key pairs"
 
   network_interface {
-    device_index = 0
+    device_index         = 0
     network_interface_id = aws_network_interface.web-server.id
   }
   user_data = file("apache2.sh")
@@ -163,12 +163,9 @@ resource "aws_instance" "ubuntu_server" {
     Name = "Ubuntu_server"
   }
   lifecycle {
-  create_before_destroy = true
+    create_before_destroy = true
   }
 }
 
-# 10. Take output public ip
-output "server_public_ip" {
-  value = aws_eip.one.public_ip
-}
-  
+
+
